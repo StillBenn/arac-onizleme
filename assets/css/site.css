@@ -194,9 +194,8 @@ ul, ol { padding: 0; list-style: none; }
 
 /* how it works: the steps on the left; on the right one frame, exactly as tall as the list (its
    top on the first rule, its bottom on the last), showing the step being read — the one crossing
-   the reading line, or the one under the pointer (js/site.js). 01 → 02 is a focus pull on the same
-   dial with the offer rising over it; the rest cross-fade and settle. On a phone each step carries
-   its own picture instead. */
+   (js/site.js): from the first step each time it comes into view, the pointer holding one. The
+   pictures cross-fade and settle. On a phone each step carries its own picture instead. */
 .steps__grid { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); gap: clamp(2.5rem, 6vw, 6rem); align-items: stretch; }
 .step { position: relative; display: grid; grid-template-columns: 4.2rem 1fr auto; gap: 0.4rem 1.2rem; align-items: baseline; padding: 1.8rem 0; border-top: 1px solid var(--line-p); }
 .step:last-child { border-bottom: 1px solid var(--line-p); }
@@ -216,8 +215,8 @@ ul, ol { padding: 0; list-style: none; }
 .shot img, .step__pic img { width: 100%; height: 100%; object-fit: cover; }
 .shot img { transform: scale(1.06); transition: transform 2600ms var(--e-out); }
 .shot.is-on img { transform: none; }
-.shot--kadran img, .shot--kadran-flu img { object-position: 36% 50%; transform: none; }   /* one framing: their cross-fade is a focus pull */
-.shot--kadran-flu { transition-duration: 1300ms; }
+.shot--kadran img { object-position: 36% 50%; }
+.shot--teklif img { object-position: 64% 50%; }
 .shot--ekspertiz img { object-position: 62% 50%; }
 .steps__dots { position: absolute; left: 1.5rem; bottom: 1.4rem; z-index: 3; display: flex; gap: 0.45rem; }
 .steps__dots i { position: relative; overflow: hidden; width: 1.1rem; height: 2px; border-radius: 2px; background: rgba(236, 232, 224, 0.34); transition: width 700ms var(--e-out); }
@@ -227,32 +226,12 @@ ul, ol { padding: 0; list-style: none; }
 .steps__view.is-playing .steps__dots i.is-on::after { animation: dash-fill 4800ms linear both; }   /* site.js STEP_MS */
 @keyframes dash-fill { from { transform: scaleX(0); } }
 
-/* the sample offer over the soft dial */
-.quote { position: absolute; left: 50%; top: 50%; z-index: 2; width: min(84%, 26rem); container-type: inline-size; padding: 1.5rem 1.6rem 1.6rem; border-radius: 18px; color: var(--text);
-  background: rgba(21, 23, 26, 0.62); box-shadow: inset 0 0 0 1px rgba(236, 232, 224, 0.12), 0 40px 80px -30px rgba(0, 0, 0, 0.85);
-  opacity: 0; transform: translate(-50%, calc(-50% + 18px)); transition: opacity 900ms var(--e-out) 300ms, transform 1200ms var(--e-out) 300ms; }
-.shot.is-on .quote, .step__pic .quote { opacity: 1; transform: translate(-50%, -50%); }
-.quote__l { display: flex; justify-content: space-between; align-items: center; gap: 1rem; font: 500 0.66rem/1 var(--f-mono); letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); }
-.quote__l span { padding: 0.32rem 0.55rem; border-radius: 999px; box-shadow: inset 0 0 0 1px rgba(201, 180, 138, 0.38); font-size: 0.58rem; letter-spacing: 0.14em; color: var(--gold-hi); }
-.quote__v { margin-top: 0.9rem; font: 300 clamp(1rem, 8.6cqi, 2.1rem)/1.1 var(--f-display); font-stretch: 106%; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--gold-hi); }
-.quote__v i { font-style: normal; margin: 0 0.25em; color: rgba(236, 232, 224, 0.35); }
-.quote__v b { margin-left: 0.25em; font-weight: 300; font-size: 0.62em; color: rgba(231, 217, 182, 0.7); }
-.quote__car { margin-top: 0.5rem; font-size: 0.85rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.quote__arc { display: block; height: 2px; margin-top: 1.2rem; border-radius: 2px; background: var(--line); overflow: hidden; }
-.quote__arc i { display: block; height: 100%; background: linear-gradient(90deg, rgba(231, 217, 182, 0.45), var(--gold-hi)); transform: scaleX(0); transform-origin: left; transition: transform 1700ms var(--e-io) 600ms; }
-.shot.is-on .quote__arc i, .step__pic .quote__arc i { transform: scaleX(0.78); }
-
 @media (max-width: 900px) {
   .steps__grid { grid-template-columns: 1fr; }
   .steps__view { display: none; }
   .step { grid-template-columns: 2.8rem 1fr; }
   .step__t { grid-column: 2; margin-top: 0.4rem; }
   .step__pic { display: block; position: relative; grid-column: 2; margin-top: 1.2rem; aspect-ratio: 16 / 10; overflow: hidden; border-radius: 16px; background: var(--bg); }
-  .step__pic.shot--kadran img, .step__pic.shot--kadran-flu img { object-position: 36% 50%; }
-  .step__pic .quote { width: 86%; padding: 0.95rem 1.05rem 1.05rem; border-radius: 14px; }
-  .step__pic .quote__v { margin-top: 0.6rem; }
-  .step__pic .quote__car { font-size: 0.78rem; white-space: normal; }
-  .step__pic .quote__arc { margin-top: 0.8rem; }
 }
 
 /* damage */
