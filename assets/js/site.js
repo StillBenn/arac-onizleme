@@ -5,6 +5,7 @@
 import { YEARS, BRANDS, brand } from "./data.js";
 import { mountCar } from "./car.js";
 import { makePick } from "./pick.js";
+import "./scroll.js";
 
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -27,6 +28,7 @@ const burger = document.querySelector("[data-burger]"), sheet = document.querySe
 if (burger && sheet) {
   const set = (open) => {
     burger.setAttribute("aria-expanded", String(open));
+    document.documentElement.classList.toggle("has-sheet", open);
     if (open) { sheet.hidden = false; requestAnimationFrame(() => sheet.classList.add("is-open")); document.documentElement.style.overflow = "hidden"; }
     else { sheet.classList.remove("is-open"); document.documentElement.style.overflow = ""; setTimeout(() => { if (burger.getAttribute("aria-expanded") === "false") sheet.hidden = true; }, 400); }
   };
@@ -61,3 +63,58 @@ if (quick) {
 }
 const carEl = document.querySelector("[data-car]");
 if (carEl) mountCar(carEl);
+
+/* ---- how it works: the frame tells the four steps ----
+   Wide screens: once the frame is in view it tells the steps in order from the first, one every
+   STEP_MS (the lit dash fills like a timer). The pointer on a step shows that step and holds it;
+   leaving the list lets the story go on from there. Out of view or in a hidden tab it waits, and
+   under reduced motion it does not play by itself at all — the pointer alone moves it.
+   Phones have no frame (each step carries its own picture): there the gold rule marks the step
+   being read, the one whose top has crossed a line a little below the middle of the screen. */
+const stepsEl = document.querySelector("[data-how]");
+if (stepsEl) {
+  const STEP_MS = 4800;
+  const view = stepsEl.querySelector(".steps__view");
+  const items = [...stepsEl.querySelectorAll("[data-how-step]")];
+  const shots = [...stepsEl.querySelectorAll("[data-how-shot]")];
+  const dots = [...stepsEl.querySelectorAll(".steps__dots i")];
+  let on = 0, timer = 0, inView = false, held = false, queued = false;
+  const wide = () => getComputedStyle(view).display !== "none";
+  const show = (i) => {
+    on = i;
+    items.forEach((el, k) => el.classList.toggle("is-on", k === i));
+    shots.forEach((el, k) => el.classList.toggle("is-on", k === i));
+    dots.forEach((el) => el.classList.remove("is-on"));
+    void view.offsetWidth;                    /* the dash starts filling again from empty */
+    dots[i].classList.add("is-on");
+  };
+  const tick = () => {
+    clearTimeout(timer);
+    const play = wide() && !reduced && inView && !held && !document.hidden;
+    view.classList.toggle("is-playing", play);
+    if (play) timer = setTimeout(() => { show((on + 1) % items.length); tick(); }, STEP_MS);
+  };
+  new IntersectionObserver(([e]) => {
+    const now = e.intersectionRatio >= 0.55;
+    if (now && !inView && !held) show(0);     /* every time it comes into view, from the first step */
+    inView = now;
+    tick();
+  }, { threshold: [0, 0.55] }).observe(view);
+  document.addEventListener("visibilitychange", tick);
+  if (matchMedia("(hover: hover)").matches) {
+    items.forEach((el, k) => el.addEventListener("pointerenter", () => { if (!wide()) return; held = true; if (k !== on) show(k); tick(); }));
+    stepsEl.querySelector(".steps__list").addEventListener("pointerleave", () => { if (!held) return; held = false; tick(); });
+  }
+  items.forEach((el, k) => el.addEventListener("click", () => { if (wide() && k !== on) { show(k); tick(); } }));
+  const reading = () => {
+    queued = false;
+    if (wide()) return;
+    const line = innerHeight * 0.58;
+    let read = 0;
+    items.forEach((el, k) => { if (el.getBoundingClientRect().top < line) read = k; });
+    if (read !== on) show(read);
+  };
+  addEventListener("scroll", () => { if (!queued) { queued = true; requestAnimationFrame(reading); } }, { passive: true });
+  addEventListener("resize", () => { reading(); tick(); });
+  reading();
+}

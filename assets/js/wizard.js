@@ -137,6 +137,7 @@ const RENDER = {
     <p class="offer"><span data-count="${o.low}">0</span><i>–</i><span data-count="${o.high}">0</span><b>₺</b></p>
     <ul class="offer__why" role="list"><li><span>Kilometre</span>${fmt(car.km || 0)} km</li><li><span>Kaporta</span>${Object.keys(car.parts || {}).length ? Object.keys(car.parts).length + " parça işaretli" : "Hasarsız"}</li><li><span>Tramer</span>${car.tramer > 0 ? fmt(car.tramer) + " ₺" : "Yok"}</li></ul>
     <p class="scr__hint">Kesin teklifimizi ücretsiz ekspertizden sonra veririz. Teklifi kabul etmezseniz hiçbir yükümlülüğünüz olmaz.</p>
+    ${"preview" in document.body.dataset ? `<p class="scr__note">Önizleme: bu fiyat örnek bir modelle hesaplandı.</p>` : ""}
     <div class="scr__go scr__go--two"><button class="btn btn--gold" type="button" data-next>Ücretsiz ekspertiz randevusu al ${ARW}</button><button class="link" type="button" data-back="kaporta">Bilgileri düzenle</button></div>`;
   },
   randevu: () => `${back("teklif")}${head("Ekspertiz için gün ve saat", `${esc(car.city || "")} · size en yakın ekspertiz noktasında, yaklaşık 45 dakika`)}
