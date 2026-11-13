@@ -216,7 +216,7 @@ ul, ol { padding: 0; list-style: none; }
 .shot img { transform: scale(1.06); transition: transform 2600ms var(--e-out); }
 .shot.is-on img { transform: none; }
 .shot--kadran img { object-position: 36% 50%; }
-.shot--teklif img { object-position: 64% 50%; }
+.shot--teklif img { object-position: 22% 50%; }
 .shot--ekspertiz img { object-position: 62% 50%; }
 .steps__dots { position: absolute; left: 1.5rem; bottom: 1.4rem; z-index: 3; display: flex; gap: 0.45rem; }
 .steps__dots i { position: relative; overflow: hidden; width: 1.1rem; height: 2px; border-radius: 2px; background: rgba(236, 232, 224, 0.34); transition: width 700ms var(--e-out); }
