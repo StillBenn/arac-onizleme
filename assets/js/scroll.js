@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Aurea — scrolling
+   MZA Cars — scrolling
    --------------------------------------------------------------------------
    A mouse wheel does not produce motion, it produces steps: one notch is a
    fixed jump. Here the real scroll position follows a target on a critically

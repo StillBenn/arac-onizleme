@@ -16,7 +16,7 @@ import { makePick } from "./pick.js";
 const root = document.querySelector("[data-wiz]");
 const screen = root.querySelector("[data-screen]");
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-const KEY = "aurea-degerleme";
+const KEY = "mza-degerleme";
 const fmt = (n) => new Intl.NumberFormat("tr-TR").format(n);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const ARW = '<svg class="arw" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11M11 5.5 15.5 10 11 14.5"/></svg>';

@@ -1,9 +1,8 @@
 /* ==========================================================================
-   Aurea — every page: the header, the menu, words arriving, our own pickers,
-   and the home page's quick start and car diagram.
+   MZA Cars — every page: the header, the menu, words arriving, our own pickers,
+   and the home page's quick start.
    ========================================================================== */
 import { YEARS, BRANDS, brand } from "./data.js";
-import { mountCar } from "./car.js";
 import { makePick } from "./pick.js";
 import "./scroll.js";
 
@@ -51,7 +50,8 @@ const quick = document.querySelector("[data-quick]");
 if (quick) {
   const NEED = ["yil", "marka", "model"];           /* all three must be chosen before the offer (client, 19.11) */
   const el = (n) => quick.querySelector(`[data-pick="${n}"]`);
-  const ok = (n) => el(n).classList.remove("is-invalid", "is-nudge", "is-first");
+  const flag = (n, bad) => { const b = el(n).querySelector(".pick__btn"); if (bad) { b.setAttribute("aria-invalid", "true"); b.setAttribute("aria-describedby", "quick-msg"); } else { b.removeAttribute("aria-invalid"); b.removeAttribute("aria-describedby"); } };
+  const ok = (n) => { el(n).classList.remove("is-invalid", "is-nudge", "is-first"); flag(n, false); };
   const model = makePick(el("model"), { items: () => (brand(marka.value())?.models || []).map((m) => ({ value: m.id, label: m.name })), onPick: () => ok("model") });
   model.disable(true);
   const marka = makePick(el("marka"), { search: true, items: () => BRANDS.map((b) => ({ value: b.id, label: b.name })), onPick: () => { ok("marka"); model.disable(false); model.clear(); } });
@@ -62,7 +62,7 @@ if (quick) {
     const val = (n) => quick.querySelector(`input[name="${n}"]`).value;
     const miss = NEED.filter((n) => !val(n));
     if (miss.length) {                               /* the empty ones turn red and give a small shake */
-      NEED.forEach((n) => { const p = el(n); p.classList.remove("is-nudge", "is-first"); p.classList.toggle("is-invalid", miss.includes(n)); });
+      NEED.forEach((n) => { const p = el(n); p.classList.remove("is-nudge", "is-first"); p.classList.toggle("is-invalid", miss.includes(n)); flag(n, miss.includes(n)); });
       void quick.offsetWidth;
       el(miss[0]).classList.add("is-nudge", "is-first");   /* the eye goes to where to begin */
       el(miss[0]).querySelector(".pick__btn").focus({ preventScroll: true });
@@ -74,8 +74,6 @@ if (quick) {
     location.href = quick.getAttribute("action") + "?" + q;
   });
 }
-const carEl = document.querySelector("[data-car]");
-if (carEl) mountCar(carEl);
 
 /* ---- how it works: the frame tells the four steps ----
    Wide screens: once the frame is in view it tells the steps in order from the first, one every

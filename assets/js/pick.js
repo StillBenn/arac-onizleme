@@ -23,15 +23,25 @@ export function makePick(root, { items, grid = false, search = false, onPick }) 
     document.querySelectorAll(".pick.is-open").forEach((p) => p !== root && p.__close && p.__close());
     clearTimeout(closing);
     render();
+    /* the list opens to the side with room, never past the screen's edge or under the header, and always
+       right at the field that opened it. On phones the field is static so the list spans the whole quick
+       bar; it is then pinned to this field's own edge (a second-row field's list covers the first row) */
     const r = btn.getBoundingClientRect();
-    const up = r.bottom + 380 > innerHeight && r.top > 400;
+    const below = innerHeight - r.bottom - 12, above = r.top - (document.querySelector("[data-hdr]")?.offsetHeight || 0) - 12;
+    const up = below < 320 && above > below;
     pop.classList.toggle("is-up", up); pop.classList.toggle("is-down", !up);
+    pop.style.maxHeight = Math.round(Math.max(180, Math.min(384, (up ? above : below) - 10))) + "px";
+    if (getComputedStyle(root).position === "static") {
+      const b = root.parentElement.getBoundingClientRect();
+      pop.style.top = up ? "auto" : Math.round(r.bottom - b.top + 8) + "px";
+      pop.style.bottom = up ? Math.round(b.bottom - r.top + 8) + "px" : "auto";
+    } else pop.style.top = pop.style.bottom = "";
     pop.hidden = false;
     requestAnimationFrame(() => root.classList.add("is-open"));
     btn.setAttribute("aria-expanded", "true");
     if (find) find.focus({ preventScroll: true });
-    const sel = list.querySelector('[aria-selected="true"]');
-    if (sel) sel.scrollIntoView({ block: "center" });
+    const sel = list.querySelector('[aria-selected="true"]');   /* the chosen one in view: the list scrolls, the page does not */
+    if (sel) list.scrollTop = sel.offsetTop - (list.clientHeight - sel.offsetHeight) / 2;
   };
   const close = (refocus) => {
     root.classList.remove("is-open");
