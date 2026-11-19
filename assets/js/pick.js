@@ -6,7 +6,7 @@
 export function makePick(root, { items, grid = false, search = false, onPick }) {
   const label = root.dataset.label, empty = root.dataset.empty || "Seçin", name = root.dataset.pick;
   root.innerHTML = `<button type="button" class="pick__btn" aria-haspopup="listbox" aria-expanded="false"><span class="pick__label">${label}</span><span class="pick__value is-empty">${empty}</span><svg class="pick__chev" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></button>
-    <input type="hidden" name="${name}"><div class="pick__pop" hidden>${search ? '<input class="pick__search" type="search" placeholder="Ara" aria-label="' + label + ' ara" autocomplete="off">' : ""}<div class="pick__list${grid ? " is-grid" : ""}" role="listbox" aria-label="${label}"></div></div>`;
+    <input type="hidden" name="${name}"><div class="pick__pop" hidden>${search ? '<input class="pick__search" type="search" placeholder="' + label + ' ara…" aria-label="' + label + ' ara" autocomplete="off" enterkeyhint="search">' : ""}<div class="pick__list${grid ? " is-grid" : ""}" role="listbox" aria-label="${label}"></div></div>`;
   const btn = root.querySelector(".pick__btn"), val = root.querySelector(".pick__value"), input = root.querySelector('input[type="hidden"]');
   const pop = root.querySelector(".pick__pop"), list = root.querySelector(".pick__list"), find = root.querySelector(".pick__search");
   let active = -1, shown = [], closing = 0;

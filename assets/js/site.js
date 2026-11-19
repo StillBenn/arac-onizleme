@@ -49,16 +49,29 @@ else {
 /* ---- the home page: quick start and the diagram ---- */
 const quick = document.querySelector("[data-quick]");
 if (quick) {
+  const NEED = ["yil", "marka", "model"];           /* all three must be chosen before the offer (client, 19.11) */
   const el = (n) => quick.querySelector(`[data-pick="${n}"]`);
-  const model = makePick(el("model"), { items: () => (brand(marka.value())?.models || []).map((m) => ({ value: m.id, label: m.name })) });
+  const ok = (n) => el(n).classList.remove("is-invalid", "is-nudge", "is-first");
+  const model = makePick(el("model"), { items: () => (brand(marka.value())?.models || []).map((m) => ({ value: m.id, label: m.name })), onPick: () => ok("model") });
   model.disable(true);
-  const marka = makePick(el("marka"), { search: true, items: () => BRANDS.map((b) => ({ value: b.id, label: b.name })), onPick: () => { model.disable(false); model.clear("Model seçin"); } });
-  makePick(el("yil"), { grid: true, items: () => YEARS.map((y) => ({ value: String(y), label: String(y) })) });
+  const marka = makePick(el("marka"), { search: true, items: () => BRANDS.map((b) => ({ value: b.id, label: b.name })), onPick: () => { ok("marka"); model.disable(false); model.clear(); } });
+  makePick(el("yil"), { grid: true, items: () => YEARS.map((y) => ({ value: String(y), label: String(y) })), onPick: () => ok("yil") });
+  const msg = quick.querySelector("[data-quick-msg]");
   quick.addEventListener("submit", (e) => {
     e.preventDefault();
+    const val = (n) => quick.querySelector(`input[name="${n}"]`).value;
+    const miss = NEED.filter((n) => !val(n));
+    if (miss.length) {                               /* the empty ones turn red and give a small shake */
+      NEED.forEach((n) => { const p = el(n); p.classList.remove("is-nudge", "is-first"); p.classList.toggle("is-invalid", miss.includes(n)); });
+      void quick.offsetWidth;
+      el(miss[0]).classList.add("is-nudge", "is-first");   /* the eye goes to where to begin */
+      el(miss[0]).querySelector(".pick__btn").focus({ preventScroll: true });
+      if (msg) msg.textContent = "Teklif için önce " + miss.map((n) => el(n).dataset.label.toLocaleLowerCase("tr")).join(", ") + " seçin.";
+      return;
+    }
     const q = new URLSearchParams();
-    for (const n of ["yil", "marka", "model"]) { const v = quick.querySelector(`input[name="${n}"]`).value; if (v) q.set(n, v); }
-    location.href = quick.getAttribute("action") + (q.toString() ? "?" + q : "");
+    NEED.forEach((n) => q.set(n, val(n)));
+    location.href = quick.getAttribute("action") + "?" + q;
   });
 }
 const carEl = document.querySelector("[data-car]");
