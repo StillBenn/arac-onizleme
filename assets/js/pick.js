@@ -1,7 +1,9 @@
 /* ==========================================================================
    Pickers: a button and a list of our own — the browser's grey list is not
    ours. makePick(root, { items, grid, search, onPick }); root carries
-   data-pick (the field's name), data-label and data-empty.
+   data-pick (the field's name), data-label and data-empty. An item is
+   { value, label } and may add a note (shown quietly beside it in the list,
+   and searched too) and a short (what the field shows once it is chosen).
    ========================================================================== */
 export function makePick(root, { items, grid = false, search = false, onPick }) {
   const label = root.dataset.label, empty = root.dataset.empty || "Seçin", name = root.dataset.pick;
@@ -13,8 +15,8 @@ export function makePick(root, { items, grid = false, search = false, onPick }) 
 
   const render = () => {
     const q = (find ? find.value : "").trim().toLocaleLowerCase("tr");
-    shown = items().filter((o) => !q || o.label.toLocaleLowerCase("tr").includes(q));
-    list.innerHTML = shown.length ? shown.map((o, i) => `<button type="button" class="pick__opt" role="option" data-i="${i}" aria-selected="${o.value === input.value}">${o.label}</button>`).join("") : '<p class="pick__none">Sonuç yok</p>';
+    shown = items().filter((o) => !q || (o.label + " " + (o.note || "")).toLocaleLowerCase("tr").includes(q));
+    list.innerHTML = shown.length ? shown.map((o, i) => `<button type="button" class="pick__opt" role="option" data-i="${i}" aria-selected="${o.value === input.value}">${o.label}${o.note ? `<span class="pick__note">${o.note}</span>` : ""}</button>`).join("") : '<p class="pick__none">Sonuç yok</p>';
     active = shown.findIndex((o) => o.value === input.value);
   };
   const mark = () => list.querySelectorAll(".pick__opt").forEach((b, i) => b.classList.toggle("is-active", i === active));
@@ -52,7 +54,7 @@ export function makePick(root, { items, grid = false, search = false, onPick }) 
   root.__close = () => close(false);
   const choose = (o) => {
     input.value = o.value;
-    val.textContent = o.label; val.classList.remove("is-empty");
+    val.textContent = o.short || o.label; val.classList.remove("is-empty");
     close(true);
     if (onPick) onPick(o);
   };
@@ -73,7 +75,7 @@ export function makePick(root, { items, grid = false, search = false, onPick }) 
   document.addEventListener("pointerdown", (e) => { if (root.classList.contains("is-open") && !root.contains(e.target)) close(false); });
 
   return {
-    set(value) { const o = items().find((x) => x.value === value); if (o) { input.value = o.value; val.textContent = o.label; val.classList.remove("is-empty"); } },
+    set(value) { const o = items().find((x) => x.value === value); if (o) { input.value = o.value; val.textContent = o.short || o.label; val.classList.remove("is-empty"); } },
     clear(text) { input.value = ""; val.textContent = text || empty; val.classList.add("is-empty"); },
     disable(off) { btn.disabled = !!off; },
     value: () => input.value,

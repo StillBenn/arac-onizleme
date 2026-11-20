@@ -136,8 +136,10 @@ document.addEventListener("click", (e) => {
   e.preventDefault();
   const hdr = document.querySelector("[data-hdr]");
   const room = (hdr ? hdr.offsetHeight : 0) + 24;
-  const pad = parseFloat(getComputedStyle(el).paddingTop) || 0;
-  scrollToY(el.getBoundingClientRect().top + scrollY + pad - room);
+  const pad = el.matches("section") ? parseFloat(getComputedStyle(el).paddingTop) || 0 : 0;   /* a card (the footer's "MZA Ekspert") lands whole, its own edge under the header */
+  const tf = getComputedStyle(el).transform;   /* a card still arriving (.reveal) sits lower than it will rest: aim for where it rests */
+  const lift = tf && tf !== "none" ? new DOMMatrix(tf).m42 : 0;
+  scrollToY(el.getBoundingClientRect().top - lift + scrollY + pad - room);
   if (history.replaceState) history.replaceState(null, "", a.hash);
   if (a.classList.contains("skip")) { el.setAttribute("tabindex", "-1"); el.focus({ preventScroll: true }); }
 });

@@ -2,7 +2,7 @@
    MZA Cars — every page: the header, the menu, words arriving, our own pickers,
    and the home page's quick start.
    ========================================================================== */
-import { YEARS, BRANDS, brand } from "./data.js";
+import { YEARS, BRANDS } from "./data.js";
 import { makePick } from "./pick.js";
 import "./scroll.js";
 
@@ -21,6 +21,27 @@ function headerTone() {
 addEventListener("scroll", headerTone, { passive: true });
 addEventListener("resize", headerTone);
 headerTone();
+
+/* ---- the home page's menu follows the section on screen (critique, 20.11): the gold mark sits under the
+   link of the section whose top has passed a line a third of the way down; the footer lights "İletişim" ---- */
+if (document.body.dataset.page === "index") {
+  const links = [...document.querySelectorAll(".nav .nav__link, .sheet__nav .nav__link")];
+  const spots = links.map((a) => a.hash).filter((h, i, all) => all.indexOf(h) === i)
+    .map((h) => [h, h ? document.getElementById(h.slice(1)) : document.getElementById("arac-satim")]).filter(([, el]) => el);
+  document.documentElement.classList.add("has-spy");
+  let queued = false;
+  const spy = () => {
+    queued = false;
+    const line = (hdr ? hdr.offsetHeight : 0) + innerHeight * 0.3;
+    let here = "";
+    spots.forEach(([h, el]) => { if (el.getBoundingClientRect().top <= line) here = h; });
+    if (innerHeight + scrollY >= document.documentElement.scrollHeight - 4) here = "#iletisim";
+    links.forEach((a) => a.classList.toggle("is-here", a.hash === here));
+  };
+  addEventListener("scroll", () => { if (!queued) { queued = true; requestAnimationFrame(spy); } }, { passive: true });
+  addEventListener("resize", spy);
+  spy();
+}
 
 /* ---- the phone menu ---- */
 const burger = document.querySelector("[data-burger]"), sheet = document.querySelector("[data-sheet]");
@@ -45,16 +66,24 @@ else {
   reveals.forEach((el) => io.observe(el));
 }
 
-/* ---- the home page: quick start and the diagram ---- */
+/* ---- the home page: quick start ----
+   The client's order (20.11): model first, then brand, then year. The model list therefore holds every
+   brand's models (the brand shown beside each, and searchable: "toyota" lists Toyota's); choosing one
+   fills in its brand. Choosing a brand first narrows the models to that brand, and a model that does
+   not belong to a newly chosen brand is cleared. A model's value is "brand/model". */
 const quick = document.querySelector("[data-quick]");
 if (quick) {
-  const NEED = ["yil", "marka", "model"];           /* all three must be chosen before the offer (client, 19.11) */
+  const NEED = ["model", "marka", "yil"];           /* all three must be chosen before the offer (client, 19.11) */
   const el = (n) => quick.querySelector(`[data-pick="${n}"]`);
   const flag = (n, bad) => { const b = el(n).querySelector(".pick__btn"); if (bad) { b.setAttribute("aria-invalid", "true"); b.setAttribute("aria-describedby", "quick-msg"); } else { b.removeAttribute("aria-invalid"); b.removeAttribute("aria-describedby"); } };
   const ok = (n) => { el(n).classList.remove("is-invalid", "is-nudge", "is-first"); flag(n, false); };
-  const model = makePick(el("model"), { items: () => (brand(marka.value())?.models || []).map((m) => ({ value: m.id, label: m.name })), onPick: () => ok("model") });
-  model.disable(true);
-  const marka = makePick(el("marka"), { search: true, items: () => BRANDS.map((b) => ({ value: b.id, label: b.name })), onPick: () => { ok("marka"); model.disable(false); model.clear(); } });
+  const ALL = BRANDS.flatMap((b) => b.models.map((m) => ({ value: `${b.id}/${m.id}`, label: m.name, note: b.name, short: m.name })))
+    .sort((a, b) => a.label.localeCompare(b.label, "tr") || a.note.localeCompare(b.note, "tr"));
+  const model = makePick(el("model"), { search: true,
+    items: () => { const b = marka.value(); return b ? ALL.filter((o) => o.value.startsWith(b + "/")).map((o) => ({ ...o, note: "" })) : ALL; },
+    onPick: (o) => { ok("model"); const b = o.value.split("/")[0]; if (marka.value() !== b) { marka.set(b); ok("marka"); } } });
+  const marka = makePick(el("marka"), { search: true, items: () => BRANDS.map((b) => ({ value: b.id, label: b.name })),
+    onPick: (o) => { ok("marka"); if (model.value() && !model.value().startsWith(o.value + "/")) model.clear(); } });
   makePick(el("yil"), { grid: true, items: () => YEARS.map((y) => ({ value: String(y), label: String(y) })), onPick: () => ok("yil") });
   const msg = quick.querySelector("[data-quick-msg]");
   quick.addEventListener("submit", (e) => {
@@ -69,63 +98,7 @@ if (quick) {
       if (msg) msg.textContent = "Teklif için önce " + miss.map((n) => el(n).dataset.label.toLocaleLowerCase("tr")).join(", ") + " seçin.";
       return;
     }
-    const q = new URLSearchParams();
-    NEED.forEach((n) => q.set(n, val(n)));
+    const q = new URLSearchParams({ yil: val("yil"), marka: val("marka"), model: val("model").split("/")[1] });
     location.href = quick.getAttribute("action") + "?" + q;
   });
-}
-
-/* ---- how it works: the frame tells the four steps ----
-   Wide screens: once the frame is in view it tells the steps in order from the first, one every
-   STEP_MS (the lit dash fills like a timer). The pointer on a step shows that step and holds it;
-   leaving the list lets the story go on from there. Out of view or in a hidden tab it waits, and
-   under reduced motion it does not play by itself at all — the pointer alone moves it.
-   Phones have no frame (each step carries its own picture): there the gold rule marks the step
-   being read, the one whose top has crossed a line a little below the middle of the screen. */
-const stepsEl = document.querySelector("[data-how]");
-if (stepsEl) {
-  const STEP_MS = 4800;
-  const view = stepsEl.querySelector(".steps__view");
-  const items = [...stepsEl.querySelectorAll("[data-how-step]")];
-  const shots = [...stepsEl.querySelectorAll("[data-how-shot]")];
-  const dots = [...stepsEl.querySelectorAll(".steps__dots i")];
-  let on = 0, timer = 0, inView = false, held = false, queued = false;
-  const wide = () => getComputedStyle(view).display !== "none";
-  const show = (i) => {
-    on = i;
-    items.forEach((el, k) => el.classList.toggle("is-on", k === i));
-    shots.forEach((el, k) => el.classList.toggle("is-on", k === i));
-    dots.forEach((el) => el.classList.remove("is-on"));
-    void view.offsetWidth;                    /* the dash starts filling again from empty */
-    dots[i].classList.add("is-on");
-  };
-  const tick = () => {
-    clearTimeout(timer);
-    const play = wide() && !reduced && inView && !held && !document.hidden;
-    view.classList.toggle("is-playing", play);
-    if (play) timer = setTimeout(() => { show((on + 1) % items.length); tick(); }, STEP_MS);
-  };
-  new IntersectionObserver(([e]) => {
-    const now = e.intersectionRatio >= 0.55;
-    if (now && !inView && !held) show(0);     /* every time it comes into view, from the first step */
-    inView = now;
-    tick();
-  }, { threshold: [0, 0.55] }).observe(view);
-  document.addEventListener("visibilitychange", tick);
-  if (matchMedia("(hover: hover)").matches) {
-    items.forEach((el, k) => el.addEventListener("pointerenter", () => { if (!wide()) return; held = true; if (k !== on) show(k); tick(); }));
-    stepsEl.querySelector(".steps__list").addEventListener("pointerleave", () => { if (!held) return; held = false; tick(); });
-  }
-  items.forEach((el, k) => el.addEventListener("click", () => { if (wide() && k !== on) { show(k); tick(); } }));
-  const reading = () => {
-    queued = false;
-    if (wide()) return;
-    const line = innerHeight * 0.58;
-    let read = 0;
-    items.forEach((el, k) => { if (el.getBoundingClientRect().top < line) read = k; });
-    if (read !== on) show(read);
-  };
-  addEventListener("scroll", () => { if (!queued) { queued = true; requestAnimationFrame(reading); } }, { passive: true });
-  addEventListener("resize", () => { reading(); tick(); });
-  reading();
 }
