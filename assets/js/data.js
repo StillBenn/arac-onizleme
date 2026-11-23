@@ -64,12 +64,66 @@ export const STATES = [["orijinal", "Orijinal"], ["lokal", "Lokal boyalı"], ["b
 export const CITIES = ["Adana", "Adıyaman", "Afyonkarahisar", "Ağrı", "Aksaray", "Amasya", "Ankara", "Antalya", "Ardahan", "Artvin", "Aydın", "Balıkesir", "Bartın", "Batman", "Bayburt", "Bilecik", "Bingöl", "Bitlis", "Bolu", "Burdur", "Bursa", "Çanakkale", "Çankırı", "Çorum", "Denizli", "Diyarbakır", "Düzce", "Edirne", "Elazığ", "Erzincan", "Erzurum", "Eskişehir", "Gaziantep", "Giresun", "Gümüşhane", "Hakkâri", "Hatay", "Iğdır", "Isparta", "İstanbul", "İzmir", "Kahramanmaraş", "Karabük", "Karaman", "Kars", "Kastamonu", "Kayseri", "Kırıkkale", "Kırklareli", "Kırşehir", "Kilis", "Kocaeli", "Konya", "Kütahya", "Malatya", "Manisa", "Mardin", "Mersin", "Muğla", "Muş", "Nevşehir", "Niğde", "Ordu", "Osmaniye", "Rize", "Sakarya", "Samsun", "Şanlıurfa", "Siirt", "Sinop", "Sivas", "Şırnak", "Tekirdağ", "Tokat", "Trabzon", "Tunceli", "Uşak", "Van", "Yalova", "Yozgat", "Zonguldak"];
 
 /* ---------------------------------------------------------------- API --- */
-const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+/* "Teklif Al" (client, 23.11): the answers go to the offer service (worker/), which numbers the form
+   (MZA00001, MZA00002 …), writes it as an A4 PDF and mails it to MZA's appointed address. */
+export const ENDPOINT = "https://www.mzacars.com/api/teklif";
+const FIELDS = ["sid", "brand", "model", "year", "body", "trim", "color", "engine", "fuel", "gear", "km", "parts", "hasTramer", "tramer", "heavy", "name", "tel", "city", "kvkk"];
+const DAMAGE = ["lokal", "boyali", "degisen"];
+const label = (list, id) => (list.find(([k]) => k === id) || [])[1];
+const NF = new Intl.NumberFormat("tr-TR"), fmt = (n) => NF.format(n);   /* made once: building a formatter is the slow part */
 
-/* Sends the application. The real call (the client's CRM, a mail, a form service) replaces this. */
-export async function apply(request) {
-  await wait(900);
-  return { ok: true, ref: "MZA-" + String(Date.now()).slice(-6) };
+export async function apply({ car, web = "" }) {
+  const body = { ...Object.fromEntries(FIELDS.map((k) => [k, car[k]])), parts: car.parts || {}, tramer: car.tramer || 0 };   /* an untouched diagram is a clean car */
+  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 20000);
+  try {
+    const r = await fetch(ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ car: body, web }), signal: ctl.signal });
+    const out = await r.json().catch(() => ({}));
+    return { ok: r.ok && out.ok === true };
+  } catch (e) {
+    return { ok: false };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/* The same answers checked on the server: every choice must be one the form offers. Returns the first problem, or "". */
+export function check(c) {
+  if (!c || typeof c !== "object") return "form";
+  if (!/^[a-z0-9]{12,40}$/.test(String(c.sid || ""))) return "sid";
+  const tel = String(c.tel || "").replace(/\D/g, "");
+  const parts = c.parts && typeof c.parts === "object" && !Array.isArray(c.parts) ? c.parts : null;
+  const rules = [
+    ["brand", brand(c.brand)], ["model", model(c.brand, c.model)], ["year", YEARS.includes(c.year)],
+    ["body", label(BODIES, c.body)], ["trim", TRIMS.includes(c.trim)], ["color", label(COLORS, c.color)],
+    ["engine", label(ENGINES, c.engine)], ["fuel", label(FUELS, c.fuel)], ["gear", label(GEARS, c.gear)],
+    ["km", Number.isInteger(c.km) && c.km > 0 && c.km < 2000000],
+    ["parts", parts && Object.entries(parts).every(([k, v]) => label(PARTS, k) && DAMAGE.includes(v))],
+    ["tramer", (c.hasTramer === "0") || (c.hasTramer === "1" && Number.isInteger(c.tramer) && c.tramer > 0 && c.tramer < 100000000)],
+    ["heavy", typeof c.heavy === "boolean"],
+    ["name", typeof c.name === "string" && c.name.trim().length >= 3 && c.name.trim().length <= 80 && !/[\u0000-\u001f<>]/.test(c.name)],
+    ["tel", /^5\d{9}$/.test(tel)], ["city", CITIES.includes(c.city)], ["kvkk", c.kvkk === true],
+  ];
+  const bad = rules.find(([, ok]) => !ok);
+  return bad ? bad[0] : "";
+}
+
+/* The answers in words, for the PDF and the mail: what the visitor saw, in the form's own labels. */
+export function describe(c) {
+  const b = brand(c.brand), m = model(c.brand, c.model), tel = String(c.tel).replace(/\D/g, "");
+  const color = COLORS.find(([k]) => k === c.color);
+  return {
+    car: `${b.name} ${m.name}`,
+    line: [c.year, label(BODIES, c.body), fmt(c.km) + " km"].join(" · "),
+    damage: [Object.keys(c.parts).length ? `${Object.keys(c.parts).length} işlemli parça` : "Tüm parçalar orijinal",
+      c.hasTramer === "1" ? `Tramer ${fmt(c.tramer)} ₺` : "Tramer yok", c.heavy ? "Ağır hasar var" : "Ağır hasar yok"].join(" · "),
+    vehicle: [["Marka", b.name], ["Model", m.name], ["Model yılı", String(c.year)], ["Kasa tipi", label(BODIES, c.body)], ["Donanım paketi", c.trim],
+      ["Renk", color[1], color[2]], ["Motor hacmi", label(ENGINES, c.engine)], ["Yakıt", label(FUELS, c.fuel)], ["Vites", label(GEARS, c.gear)],
+      ["Kilometre", fmt(c.km) + " km"]],
+    records: [["Tramer kaydı", c.hasTramer === "1" ? `Var · ${fmt(c.tramer)} ₺` : "Yok"], ["Ağır hasar kaydı", c.heavy ? "Var" : "Yok"]],
+    parts: PARTS.filter(([id]) => c.parts[id]).map(([id, name]) => [id, name, c.parts[id], label(STATES, c.parts[id])]),
+    owner: [["Ad soyad", c.name.trim().replace(/\s+/g, " ")], ["Cep telefonu", `+90 ${tel.slice(0, 3)} ${tel.slice(3, 6)} ${tel.slice(6, 8)} ${tel.slice(8)}`],
+      ["Bulunduğunuz şehir", c.city], ["Aydınlatma metni", "Okundu, onaylandı"]],
+  };
 }
 
 function slug(s) {

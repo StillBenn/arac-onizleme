@@ -139,8 +139,10 @@ const RENDER = {
       <label class="field"><span class="field__l">Ad soyad</span><input class="field__input" name="ad" autocomplete="name" value="${esc(car.name || "")}" data-focus></label>
       <label class="field"><span class="field__l">Cep telefonu</span><span class="tel"><b>+90</b><input class="field__input" name="tel" inputmode="tel" autocomplete="tel-national" placeholder="5xx xxx xx xx" value="${esc(car.tel || "")}"></span></label>
       <div class="field"><span class="field__l">Bulunduğunuz şehir</span><div class="pick pick--field" data-pick="sehir" data-label="Bulunduğunuz şehir" data-empty="Şehir seçin"></div></div>
-      <label class="check"><input type="checkbox" name="kvkk" ${car.kvkk ? "checked" : ""}><span><a href="#">Aydınlatma metnini</a> okudum; bilgilerimin ön teklif ve randevu için kullanılmasını kabul ediyorum.</span></label>
+      <input class="hp" name="web" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <label class="check"><input type="checkbox" name="kvkk" ${car.kvkk ? "checked" : ""}><span><a href="../kvkk-aydinlatma-metni/" target="_blank" rel="noopener">Aydınlatma metnini</a> okudum; bilgilerimin ön teklif ve randevu için kullanılmasını kabul ediyorum.</span></label>
     </div>
+    <p class="form__err" data-err role="alert" hidden><span>Formunuz gönderilemedi. Bilgileriniz duruyor; lütfen tekrar deneyin.</span><span>Ya da WhatsApp'tan yazın: <a href="https://wa.me/905327078083" target="_blank" rel="noopener">+90 532 707 80 83</a></span></p>
     ${nav("kayit", false, "Teklif Al")}`,
   /* the application (client, 23.11): no price, the expert calls; the narrow card opens up as the whole form */
   basvuru: () => {
@@ -254,14 +256,19 @@ const WIRE = {
       car.tel = tel.value; ok(); save();
     });
     kvkk.addEventListener("change", () => { car.kvkk = kvkk.checked; ok(); save(); });
+    /* "Teklif Al": the form goes out as a numbered PDF by mail (client, 23.11); a failed send keeps every answer */
+    const err = s.querySelector("[data-err]"), web = s.querySelector('[name="web"]');
     next.addEventListener("click", async () => {
-      next.disabled = true; next.classList.add("is-busy");
-      const r = await apply({ car });
-      car.ref = r.ref; car.sent = true; save(); go("basvuru");
+      next.disabled = true; next.classList.add("is-busy"); err.hidden = true;
+      if (!car.sid) { car.sid = Array.from(crypto.getRandomValues(new Uint8Array(12)), (b) => b.toString(16).padStart(2, "0")).join(""); save(); }   /* a retry is the same form: never numbered twice */
+      const r = await apply({ car, web: web.value });
+      next.classList.remove("is-busy");
+      if (!r.ok) { err.hidden = false; next.innerHTML = `Tekrar Gönder ${ARW}`; ok(); return; }
+      car.sent = true; save(); go("basvuru");
     });
     ok();
   },
-  basvuru: (s) => s.querySelector("[data-edit]").addEventListener("click", () => { car.sent = false; save(); go("marka", -1); }),
+  basvuru: (s) => s.querySelector("[data-edit]").addEventListener("click", () => { car.sent = false; delete car.sid; save(); go("marka", -1); }),   /* corrected answers: a new form, a new number */
 };
 
 /* ---- the summary folds on a phone ---- */

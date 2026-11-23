@@ -27,21 +27,28 @@ const mirror = (d) => d.replace(/(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/g, (_, x, y
 const SHAPES = { ...CENTRE, ...LEFT };
 for (const [id, d] of Object.entries(LEFT)) SHAPES[id.replace(/^sol/, "sag")] = mirror(d);
 
+/* the rest of the drawing, not pickable; shared with the offer form's PDF (worker/src/pdf.js) */
+export const CAR = {
+  W, SHAPES,
+  BODY: "M130,10 C190,10 222,30 226,80 L232,250 L228,430 C224,490 186,510 130,510 C74,510 36,490 32,430 L28,250 L34,80 C38,30 70,10 130,10 Z",
+  ARMS: ["M30,170 L12,176 L14,192 L32,188 Z", mirror("M30,170 L12,176 L14,192 L32,188 Z")],
+  GLASS: ["M64,158 C100,152 160,152 196,158 L186,208 C158,203 102,203 74,208 Z", "M74,326 C102,331 158,331 186,326 L194,362 C160,370 100,370 66,362 Z"],
+  WHEELS: [[14, 84], [W - 31, 84], [14, 372], [W - 31, 372]],
+  LIGHTS: { hl: ["M62,38 L86,31", mirror("M62,38 L86,31")], tl: ["M64,476 L88,484", mirror("M64,476 L88,484")] },
+};
 const NAME = Object.fromEntries(PARTS);
 const STATE = Object.fromEntries(STATES);
 
 function svg() {
   const wheel = (x, y) => `<rect class="wheel" x="${x}" y="${y}" width="17" height="56" rx="6"/>`;
   const parts = PARTS.map(([id]) => `<path class="part" data-part="${id}" d="${SHAPES[id]}" tabindex="0" role="button"/>`).join("");
+  const draw = (cls, list) => list.map((d) => `<path class="${cls}" d="${d}"/>`).join("");
   return `<svg viewBox="0 0 ${W} 520" role="group" aria-label="Aracın parçaları">
-    ${wheel(14, 84)}${wheel(W - 31, 84)}${wheel(14, 372)}${wheel(W - 31, 372)}
-    <path class="body" d="M130,10 C190,10 222,30 226,80 L232,250 L228,430 C224,490 186,510 130,510 C74,510 36,490 32,430 L28,250 L34,80 C38,30 70,10 130,10 Z"/>
-    <path class="body" d="M30,170 L12,176 L14,192 L32,188 Z"/><path class="body" d="${mirror("M30,170 L12,176 L14,192 L32,188 Z")}"/>
-    <path class="glass" d="M64,158 C100,152 160,152 196,158 L186,208 C158,203 102,203 74,208 Z"/>
-    <path class="glass" d="M74,326 C102,331 158,331 186,326 L194,362 C160,370 100,370 66,362 Z"/>
+    ${CAR.WHEELS.map(([x, y]) => wheel(x, y)).join("")}
+    ${draw("body", [CAR.BODY, ...CAR.ARMS])}
+    ${draw("glass", CAR.GLASS)}
     ${parts}
-    <path class="hl" d="M62,38 L86,31"/><path class="hl" d="${mirror("M62,38 L86,31")}"/>
-    <path class="tl" d="M64,476 L88,484"/><path class="tl" d="${mirror("M64,476 L88,484")}"/>
+    ${draw("hl", CAR.LIGHTS.hl)}${draw("tl", CAR.LIGHTS.tl)}
   </svg>`;
 }
 
