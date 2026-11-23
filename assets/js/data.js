@@ -2,10 +2,11 @@
    The data the pages ask for, behind one door.
    --------------------------------------------------------------------------
    Today every answer comes from this file: a sample catalogue and a sample
-   price model, so the site can be built and tried before the backend exists.
-   When the real source is chosen (a valuation API, the client's own pricing),
-   only the functions under "API" change — the pages call them and nothing else.
-   All prices here are SAMPLES (the preview says so on every page).
+   "send", so the site can be built and tried before the backend exists. When
+   the real source is chosen, only the functions under "API" change — the
+   pages call them and nothing else. No price is shown any more (client,
+   23.11): an MZA Araç Alım expert calls within the hour with the offer; the
+   catalogue's new prices stay for when a valuation is wanted again.
    ========================================================================== */
 
 const NOW = 2026;
@@ -40,10 +41,17 @@ export const BRANDS = CATALOG.map(([name, models]) => ({ id: slug(name), name, m
 export const brand = (id) => BRANDS.find((b) => b.id === id);
 export const model = (b, id) => (brand(b)?.models || []).find((m) => m.id === id);
 
-export const FUELS = [["benzin", "Benzin"], ["dizel", "Dizel"], ["hibrit", "Hibrit"], ["elektrik", "Elektrik"], ["lpg", "Benzin + LPG"]];
-export const GEARS = [["otomatik", "Otomatik"], ["manuel", "Manuel"]];
-export const BODIES = [["sedan", "Sedan"], ["hatchback", "Hatchback"], ["suv", "SUV / Crossover"], ["stationwagon", "Station wagon"], ["ticari", "Hafif ticari"]];
+/* the choices, in the client's own words and order (23.11) */
+const pairs = (list) => list.map((l) => [slug(l), l]);
+export const BODIES = pairs(["Cabrio", "Coupe", "Coupe 4 kapı", "Hatchback 3 kapı", "Hatchback 5 kapı", "Sedan", "Station Wagon", "Pickup", "SUV", "Minivan", "Panelvan"]);
 export const TRIMS = ["Giriş paketi", "Orta paket", "Üst paket", "Bilmiyorum"];
+/* colour: name and the swatch drawn beside it */
+export const COLORS = [["Siyah", "#141518"], ["Beyaz", "#f4f3ef"], ["Gri", "#8b8e93"], ["Krem", "#e6dbc3"], ["Kırmızı", "#b3261e"], ["Mavi", "#2f62ad"],
+  ["Lacivert", "#1f2b47"], ["Kahverengi", "#6e4b30"], ["Sarı", "#e3b52c"], ["Turuncu", "#dc6a2a"]].map(([l, c]) => [slug(l), l, c]);
+export const ENGINES = pairs(["1300 cm³'e kadar", "1301 - 1600 cm³", "1601 - 1800 cm³", "1801 - 2000 cm³", "2001 - 2500 cm³", "2501 - 3000 cm³",
+  "3001 - 3500 cm³", "3501 - 4000 cm³", "4001 - 4500 cm³", "4501 - 5000 cm³", "5001 - 5500 cm³", "5501 - 6000 cm³", "6001 cm³ ve üzeri"]);
+export const FUELS = pairs(["Benzin", "Benzin (LPG)", "Benzin (Hibrit)", "Dizel", "Dizel (Hibrit)", "Elektrik"]);
+export const GEARS = [["otomatik", "Otomatik"], ["manuel", "Manuel"]];
 
 /* the painted parts of a car, as the diagram draws them (id, name) */
 export const PARTS = [
@@ -58,52 +66,13 @@ export const CITIES = ["Adana", "Adıyaman", "Afyonkarahisar", "Ağrı", "Aksara
 /* ---------------------------------------------------------------- API --- */
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
-/* A sample price model, only so the flow can be tried: age, kilometres, fuel and gearbox, the
-   painted and replaced parts, the damage record. The real valuation replaces this function. */
-export async function valuate(car) {
-  await wait(1400);                                   // the real call takes a moment; the page shows it working
-  const m = model(car.brand, car.model);
-  const base = (m ? m.base : 1500) * 1000;
-  const age = Math.max(0, NOW - car.year);
-  let v = base * Math.max(0.24, Math.pow(0.885, age));
-  const expected = Math.max(1, age) * 16000;
-  v *= Math.min(1.06, Math.max(0.72, 1 - ((car.km || 0) - expected) / 1e6 * 0.9));
-  v *= { benzin: 1, dizel: 1.02, hibrit: 1.05, elektrik: 1, lpg: 0.93 }[car.fuel] || 1;
-  v *= car.gear === "manuel" ? 0.96 : 1;
-  v *= { "Giriş paketi": 0.96, "Orta paket": 1, "Üst paket": 1.05 }[car.trim] || 1;
-  let cut = 0;
-  for (const s of Object.values(car.parts || {})) cut += { lokal: 0.01, boyali: 0.025, degisen: 0.045 }[s] || 0;
-  v *= 1 - Math.min(0.4, cut);
-  if (car.tramer > 0) v -= Math.min(car.tramer, v * 0.3) * 0.55;
-  if (car.heavy) v *= 0.66;
-  const round = (x) => Math.round(x / 5000) * 5000;
-  return { low: round(v * 0.965), high: round(v * 1.035), sample: true };
-}
-
-/* Free inspection slots for the next working days (Sundays closed); a few taken. */
-export async function slots(city) {
-  await wait(300);
-  const days = [];
-  const d = new Date();
-  for (let i = 1; days.length < 7; i++) {
-    const day = new Date(d.getFullYear(), d.getMonth(), d.getDate() + i);
-    if (day.getDay() === 0) continue;
-    const times = [];
-    for (let h = 10; h <= 18; h++) {
-      const taken = ((day.getDate() * 7 + h * 3 + (city || "").length) % 5) === 0;
-      times.push({ t: `${String(h).padStart(2, "0")}:00`, taken });
-    }
-    days.push({ date: day, times });
-  }
-  return days;
-}
-
-export async function book(request) {
+/* Sends the application. The real call (the client's CRM, a mail, a form service) replaces this. */
+export async function apply(request) {
   await wait(900);
-  return { ok: true, ref: "AU-" + String(Date.now()).slice(-6) };
+  return { ok: true, ref: "MZA-" + String(Date.now()).slice(-6) };
 }
 
 function slug(s) {
   return s.toLocaleLowerCase("tr").replace(/[ç]/g, "c").replace(/[ğ]/g, "g").replace(/[ı]/g, "i").replace(/[ö]/g, "o")
-    .replace(/[ş]/g, "s").replace(/[ü]/g, "u").replace(/[šë]/g, (c) => ({ "š": "s", "ë": "e" })[c]).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    .replace(/[ş]/g, "s").replace(/[ü]/g, "u").replace(/[šë]/g, (c) => ({ "š": "s", "ë": "e" })[c]).replace(/³/g, "3").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }

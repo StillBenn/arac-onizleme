@@ -67,13 +67,13 @@ else {
 }
 
 /* ---- the home page: quick start ----
-   The client's order (20.11): model first, then brand, then year. The model list therefore holds every
-   brand's models (the brand shown beside each, and searchable: "toyota" lists Toyota's); choosing one
-   fills in its brand. Choosing a brand first narrows the models to that brand, and a model that does
-   not belong to a newly chosen brand is cleared. A model's value is "brand/model". */
+   The client's order (23.11): brand, then model, then year. A chosen brand narrows the models to its
+   own; before it, the model list still holds every brand's models (the brand shown beside each, and
+   searchable), and choosing one fills in its brand. A model that does not belong to a newly chosen
+   brand is cleared. A model's value is "brand/model". */
 const quick = document.querySelector("[data-quick]");
 if (quick) {
-  const NEED = ["model", "marka", "yil"];           /* all three must be chosen before the offer (client, 19.11) */
+  const NEED = ["marka", "model", "yil"];           /* all three must be chosen before the offer (client, 19.11) */
   const el = (n) => quick.querySelector(`[data-pick="${n}"]`);
   const flag = (n, bad) => { const b = el(n).querySelector(".pick__btn"); if (bad) { b.setAttribute("aria-invalid", "true"); b.setAttribute("aria-describedby", "quick-msg"); } else { b.removeAttribute("aria-invalid"); b.removeAttribute("aria-describedby"); } };
   const ok = (n) => { el(n).classList.remove("is-invalid", "is-nudge", "is-first"); flag(n, false); };
