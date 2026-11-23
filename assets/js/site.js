@@ -25,7 +25,7 @@ headerTone();
 /* ---- the home page's menu follows the section on screen (critique, 20.11): the gold mark sits under the
    link of the section whose top has passed a line a third of the way down; the footer lights "İletişim" ---- */
 if (document.body.dataset.page === "index") {
-  const links = [...document.querySelectorAll(".nav .nav__link, .sheet__nav .nav__link")];
+  const links = [...document.querySelectorAll(".nav .nav__link, .sheet__nav .nav__link")].filter((a) => a.pathname === location.pathname);
   const spots = links.map((a) => a.hash).filter((h, i, all) => all.indexOf(h) === i)
     .map((h) => [h, h ? document.getElementById(h.slice(1)) : document.getElementById("arac-satim")]).filter(([, el]) => el);
   document.documentElement.classList.add("has-spy");
@@ -41,6 +41,36 @@ if (document.body.dataset.page === "index") {
   addEventListener("scroll", () => { if (!queued) { queued = true; requestAnimationFrame(spy); } }, { passive: true });
   addEventListener("resize", spy);
   spy();
+}
+
+/* ---- the sale's steps: a pointer brings each picture up (CSS :hover); a phone has no pointer, so the
+   step being read, the one crossing the middle of the screen, lights up instead ---- */
+if (matchMedia("(hover: none)").matches && "IntersectionObserver" in window) {
+  const lit = new IntersectionObserver((es) => es.forEach((e) => e.target.classList.toggle("is-lit", e.isIntersecting)), { rootMargin: "-35% 0px -35% 0px" });
+  document.querySelectorAll(".steps__row .step").forEach((el) => lit.observe(el));
+}
+
+/* ---- about us: the car in the photo stands in the middle of the gap between the words and the two panes
+   (client, 23.11), whatever the width. The gap is measured; the photo is drawn only as much wider than the
+   band as the slide needs (each extra pixel is zoom), and slid so the car's centre lands on the gap's ---- */
+const band = document.querySelector(".band");
+if (band) {
+  const right = (el) => { const r = document.createRange(); r.selectNodeContents(el); return r.getBoundingClientRect().right; };
+  const CAR = 0.487, AR = 2400 / 1516;          /* the car's centre across the photo, and the photo's shape */
+  const place = () => {
+    if (innerWidth <= 900) { band.style.removeProperty("--photo-w"); band.style.removeProperty("--photo-l"); return; }
+    const box = band.getBoundingClientRect(), W = box.width, H = box.height;
+    const words = Math.max(right(band.querySelector(".band__title")), right(band.querySelector(".band__sub")));
+    const target = (words + band.querySelector(".band__cards").getBoundingClientRect().left) / 2 - box.left;
+    for (let w = W; w <= W * 1.6; w += W * 0.01) {      /* the narrowest frame that still covers the band */
+      const img = Math.max(w, H * AR);                  /* object-fit: cover inside that frame */
+      const l = target - (w / 2 + (CAR - 0.5) * img);
+      if (l <= 0 && l + w >= W) { band.style.setProperty("--photo-w", Math.ceil(w) + "px"); band.style.setProperty("--photo-l", Math.round(l) + "px"); return; }
+    }
+  };
+  place();
+  addEventListener("resize", place);
+  if (document.fonts) document.fonts.ready.then(place);
 }
 
 /* ---- the phone menu ---- */

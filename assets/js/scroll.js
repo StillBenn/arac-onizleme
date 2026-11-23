@@ -123,7 +123,7 @@ if (glides) {
   measure();
 }
 
-/* In-page links (the header's "#nasil", "#sss"…, written with the page's own address): glide there.
+/* In-page links (the header's "#satis-sureci", "#sss"…, written with the page's own address): glide there.
    The landing puts the section's first line (its label) just under the header, not the section's
    edge: a section's own top padding would otherwise push what it shows below the fold
    ("Nasıl çalışır" lost the foot of its frame on a 942 px screen). */
