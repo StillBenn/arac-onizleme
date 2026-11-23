@@ -142,7 +142,7 @@ const RENDER = {
       <input class="hp" name="web" tabindex="-1" autocomplete="off" aria-hidden="true">
       <label class="check"><input type="checkbox" name="kvkk" ${car.kvkk ? "checked" : ""}><span><a href="../kvkk-aydinlatma-metni/" target="_blank" rel="noopener">Aydınlatma metnini</a> okudum; bilgilerimin ön teklif ve randevu için kullanılmasını kabul ediyorum.</span></label>
     </div>
-    <p class="form__err" data-err role="alert" hidden><span>Formunuz gönderilemedi. Bilgileriniz duruyor; lütfen tekrar deneyin.</span><span>Ya da WhatsApp'tan yazın: <a href="https://wa.me/905327078083" target="_blank" rel="noopener">+90 532 707 80 83</a></span></p>
+    <p class="form__err" data-err role="alert" hidden><span>Gönderimi doğrulayamadık. Bilgileriniz duruyor; lütfen tekrar deneyin.</span><span class="form__alt">Ya da WhatsApp'tan yazın: <a href="https://wa.me/905327078083" target="_blank" rel="noopener">+90 532 707 80 83</a></span></p>
     ${nav("kayit", false, "Teklif Al")}`,
   /* the application (client, 23.11): no price, the expert calls; the narrow card opens up as the whole form */
   basvuru: () => {

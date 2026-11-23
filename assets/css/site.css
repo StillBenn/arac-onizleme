@@ -377,7 +377,7 @@ ul, ol { padding: 0; list-style: none; }
 /* ---- blog (client, 23.11: its own page, apart from the home page) ------------------- */
 .blog, .post { min-height: 100vh; min-height: 100svh; padding-top: calc(var(--hdr) + clamp(3rem, 2rem + 4vw, 6rem)); }
 .blog__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(1.6rem, 2.6vw, 2.6rem); }
-.post-card__a { display: grid; gap: 0.75rem; align-content: start; }
+.post-card__a { display: grid; gap: 0.75rem; align-content: start; height: 100%; grid-template-rows: auto auto auto 1fr auto; }
 .post-card__pic { overflow: hidden; border-radius: 16px; background: var(--bg); }
 .post-card__pic img { width: 100%; aspect-ratio: 16 / 11; object-fit: cover; object-position: var(--fx, 50%) var(--fy, 50%); transform-origin: var(--fx, 50%) var(--fy, 50%); scale: var(--z, 1); transition: scale 1200ms var(--e-out); }   /* a post can frame its cover on its subject (build.py: focus, zoom) */
 .post-card__meta, .post__meta { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; font-size: 0.86rem; color: var(--ink-soft); }
@@ -404,7 +404,7 @@ ul, ol { padding: 0; list-style: none; }
   .blog > .blog__grid > .post-card:first-child:nth-last-child(odd) { grid-column: 1 / -1; }
   .blog > .blog__grid > .post-card:first-child:nth-last-child(odd) .post-card__pic img { aspect-ratio: 16 / 8; }
 }
-.post-card__go { display: inline-flex; align-items: center; gap: 0.45rem; margin-top: 0.2rem; font-weight: 600; font-size: 0.92rem; color: var(--gold-ink); }
+.post-card__go { display: inline-flex; align-items: center; justify-self: start; gap: 0.45rem; margin-top: 0.3rem; font-weight: 600; font-size: 0.92rem; color: var(--gold-ink); }
 @media (hover: hover) {
   .post-card__a:hover .post-card__pic img { scale: calc(var(--z, 1) * 1.04); }
   .post-card__a:hover .post-card__t { color: var(--gold-ink); }
@@ -588,6 +588,7 @@ html.has-sheet .sbar { opacity: 0; pointer-events: none; }
 .hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }   /* left empty by people, filled by bots */
 .form__err { max-width: 30rem; margin-top: 1.4rem; font-size: 0.92rem; line-height: 1.6; color: var(--err); }
 .form__err span { display: block; }
+.form__err .form__alt { margin-top: 0.5rem; color: var(--text); }   /* red marks the problem only; the way out is calm */
 .form__err a { color: inherit; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
 .field { display: grid; gap: 0.55rem; }
 .field__l { font: 600 0.76rem/1 var(--f-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
